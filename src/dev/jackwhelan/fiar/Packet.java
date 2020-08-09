@@ -6,12 +6,16 @@ public class Packet implements Serializable
 {
 	private static final long serialVersionUID = 4016460685723998566L;
 	private boolean isDead;
+	private boolean myTurn;
 	private int playerId;
 	private String playerName;
 	private String message;
 	private Board board;
 	
-	public Packet() {}
+	public Packet()
+	{
+		this.setMyTurn(true);
+	}
 	
 	public Packet(int playerId)
 	{
@@ -21,6 +25,21 @@ public class Packet implements Serializable
 	public Packet(String message)
 	{
 		this.setMessage(message);
+		this.setMyTurn(true);
+	}
+
+	public Packet(String message, Board limboBoard)
+	{
+		this.setBoard(limboBoard);
+		this.setMessage(message);
+		this.setMyTurn(true);
+	}
+
+	public Packet(String message, Board limboBoard, boolean isMyTurn)
+	{
+		this.setMessage(message);
+		this.setBoard(limboBoard);
+		this.setMyTurn(isMyTurn);
 	}
 
 	public int getPlayerId()
@@ -71,5 +90,15 @@ public class Packet implements Serializable
 	public void setThreadDeath(boolean isDead)
 	{
 		this.isDead = isDead;
+	}
+	
+	public boolean isMyTurn()
+	{
+		return this.myTurn;
+	}
+	
+	public void setMyTurn(boolean isMyTurn)
+	{
+		this.myTurn = isMyTurn;
 	}
 }

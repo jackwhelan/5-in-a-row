@@ -41,9 +41,9 @@ public class Board implements Serializable
     {
         for (int i = rows-1; i >= 0; i--)
         {
-            if(slots[i][col] == ' ')
+            if(slots[i][col-1] == ' ')
             {
-                slots[i][col] = disc;
+                slots[i][col-1] = disc;
                 return true;
             }
         }

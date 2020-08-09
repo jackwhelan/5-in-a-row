@@ -17,6 +17,7 @@ public class Client
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private boolean active;
+	private boolean myTurn;
 	
 	public Client()
 	{
@@ -88,6 +89,16 @@ public class Client
 			this.playerId = responsePacket.getPlayerId();
 		}
 		
+		// If the packet's "myTurn" variable is true, it's your turn!
+		if (responsePacket.isMyTurn())
+		{
+			this.setMyTurn(true);
+		}
+		else if(!responsePacket.isMyTurn())
+		{
+			this.setMyTurn(false);
+		}
+		
 		// If the packet contains a board state store it locally and display it.
 		if (responsePacket.getBoard() != null)
 		{
@@ -101,6 +112,14 @@ public class Client
 		{
 			Packet namePacket = new Packet();
 			this.playerId = ((Packet)this.in.readObject()).getPlayerId();
+			if (this.playerId == 1)
+			{
+				this.setMyTurn(true);
+			}
+			else
+			{
+				this.setMyTurn(false);
+			}
 			System.out.println("Connected to server (" + this.socket.getInetAddress().getHostAddress() + ":" + this.socket.getPort() + ") as player " + this.playerId + ".");
 			System.out.println("What is your name?:");
 			this.playerName = sc.nextLine();
@@ -133,6 +152,16 @@ public class Client
 		}
 	}
 	
+	public boolean isMyTurn()
+	{
+		return this.myTurn;
+	}
+	
+	public void setMyTurn(boolean isMyTurn)
+	{
+		this.myTurn = isMyTurn;
+	}
+	
 	public static void main(String[] args)
 	{
 		Client gc = new Client();
@@ -140,8 +169,17 @@ public class Client
 		
 		while(gc.isActive())
 		{
-			gc.writeCommand();
-			gc.readResponse();
+			if(gc.isMyTurn())
+			{
+				System.out.println("It\'s your turn " + gc.playerName + "! Type 'help' if you need it.");
+				gc.writeCommand();
+				gc.readResponse();
+			}
+			else
+			{
+				System.out.println("It\'s your opponents turn!");
+				gc.readResponse();
+			}
 		}
 		
 		gc.close();

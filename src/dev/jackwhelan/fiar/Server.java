@@ -158,8 +158,18 @@ public class Server
 									p1.swapCurrentPlayer();
 									p2.swapCurrentPlayer();
 									this.insertBoth((char)(this.playerId+'0'), reqcol);
-									this.out.writeObject(new Packet("You inserted to column " + reqcol + "."));
+									this.out.writeObject(new Packet("You inserted to column " + reqcol + ".", this.limboBoard, false));
 									this.out.reset();
+									if(this.playerId == 1)
+									{
+										p2.out.writeObject(new Packet(this.playerName + " inserted to column " + reqcol + ".", this.limboBoard, true));
+										p2.out.reset();
+									}
+									else
+									{
+										p1.out.writeObject(new Packet(this.playerName + " inserted to column " + reqcol + ".", this.limboBoard, true));
+										p1.out.reset();
+									}
 								}
 								else
 								{
@@ -202,8 +212,9 @@ public class Server
 								res.setBoard(this.limboBoard);
 								break;
 							case "q":
-								System.out.println("[Player " + playerId + "] " + this.playerName + " has disconnected.");
-								this.stop();
+								System.out.println("[Player " + playerId + "] " + this.playerName + " has disconnected. The game will now end.");
+								p1.stop();
+								p2.stop();
 								break;
 							default:
 								res.setMessage(req.getMessage() + " is not a valid command");
@@ -236,5 +247,13 @@ public class Server
 	{
 		Server server = new Server();
 		server.listen();
+		try
+		{
+			server.socket.close();
+		}
+		catch (IOException e)
+		{
+			System.out.println("IOException in main method");
+		}
 	}
 }
