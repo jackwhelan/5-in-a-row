@@ -7,6 +7,8 @@ public class Packet implements Serializable
 	private static final long serialVersionUID = 1L;
 	private int playerId;
 	private String message;
+	private Board board;
+	private int reqcol;
 	
 	public Packet() {}
 	
@@ -21,6 +23,17 @@ public class Packet implements Serializable
 		this.message = message;
 	}
 	
+	public Packet(String message, Board board)
+	{
+		this.message = message;
+		this.board = board;
+	}
+	
+	public Packet(int reqcol)
+	{
+		this.reqcol = reqcol;
+	}
+
 	public void setMessage(String message)
 	{
 		this.message = message;
@@ -39,5 +52,15 @@ public class Packet implements Serializable
 	public int getPlayerId()
 	{
 		return this.playerId;
+	}
+	
+	public void setBoard(Board board)
+	{
+		this.board = board;
+	}
+	
+	public Board getBoard()
+	{
+		return this.board;
 	}
 }

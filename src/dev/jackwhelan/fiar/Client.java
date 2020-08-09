@@ -105,6 +105,10 @@ public class Client
 			}
 			
 			System.out.println("[Server] " + res.getMessage());
+			if(res.getBoard() != null)
+			{
+				res.getBoard().show();
+			}
 		}
 	}
 }
