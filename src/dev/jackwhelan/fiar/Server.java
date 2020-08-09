@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 public class Server
 {
 	public static final int PORT = 5000;
+	public static volatile Board board = new Board();
 	private ServerSocket socket;
 	private ExecutorService threadpool;
 	private int playerCount;
@@ -81,10 +82,11 @@ class ClientHandler implements Runnable
 	private String name;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
-	private Boolean active;
+	private volatile Boolean active;
 	
 	public ClientHandler(Socket clientSocket, int playerId)
 	{
+		this.active = true;
 		this.socket = clientSocket;
 		this.playerId = playerId;
 		try
@@ -101,38 +103,61 @@ class ClientHandler implements Runnable
 	@Override
 	public void run()
 	{
-		this.active = true;
 		this.handshake();
 		
-		while(active)
+		while(this.active)
 		{
+			Packet req = new Packet(), res = new Packet();
+			
 			try
 			{
-				Packet req = (Packet)in.readObject(), res = new Packet();
-				System.out.println("[Player " + playerId + "]: " + this.name + " " + req.getMessage());
-				switch(req.getMessage())
-				{
-					case "help":
-						res = new Packet("Commands:\n"
-								+ "\t help - shows a list of commands\n"
-								+ "\t whoami - ask the server whether you\'re player 1 or 2\n"
-								+ "\t board - ask the server for the current state of the board\n"
-								+ "\t q - quit the game\n");
-						break;
-					case "q":
-						System.out.println("[Player " + playerId + "] " + this.name + " has disconnected.");
-						active = false;
-					case "whoami":
-						res = new Packet("[Server] You are player " + playerId + " and you told us your name was " + name);
-					default:
-						res.setMessage(req.getMessage() + " is not a valid command");
-				}
-				
-				out.writeObject(res);
+				req = (Packet)in.readObject();
 			}
 			catch (IOException | ClassNotFoundException e)
 			{
-				System.out.println("[Server] Server.java -> IOException | ClassNotFoundException in ClientHandler run method -> req/res");
+				System.out.println("[Server] Session terminating for " + this.name + " (player " + playerId + ")");
+				req = new Packet("q");
+			}
+			
+			System.out.println("[Player " + playerId + " (" + this.name +")]: " + req.getMessage());
+			if (req.getMessage().matches(".*\\d.*"))
+			{
+				int reqcol = Integer.parseInt(req.getMessage());
+				if (reqcol < 10 && reqcol > 0)
+				{
+					Server.board.insert((char)playerId, reqcol);
+				}
+			}
+			switch(req.getMessage())
+			{
+				case "help":
+					res = new Packet("Commands:\n"
+							+ "\t help - shows a list of commands\n"
+							+ "\t whoami - ask the server whether you\'re player 1 or 2\n"
+							+ "\t board - ask the server for the current state of the board\n"
+							+ "\t q - quit the game\n");
+					break;
+				case "whoami":
+					res = new Packet("You are player " + playerId + " and you told us your name was " + name);
+					break;
+				case "board":
+					res = new Packet("Here is the board!", Server.board);
+					break;
+				case "q":
+					System.out.println("[Player " + playerId + "] " + this.name + " has disconnected.");
+					this.stop();
+					break;
+				default:
+					res.setMessage(req.getMessage() + " is not a valid command");
+			}
+			
+			try
+			{
+				out.writeObject(res);
+			}
+			catch (IOException e)
+			{
+				System.out.println("[Server] " + this.name + " (player " + playerId + ") is no longer reachable.");
 			}
 		}
 	}
@@ -150,5 +175,15 @@ class ClientHandler implements Runnable
 		{
 			System.out.println("[Server] Server.java -> IOException | ClassNotFoundException in ClientHandler handshake method");
 		}
+	}
+	
+	public Boolean isActive()
+	{
+		return this.active;
+	}
+	
+	public void stop()
+	{
+		this.active = false;
 	}
 }
