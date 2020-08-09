@@ -8,107 +8,142 @@ import java.util.Scanner;
 
 public class Client
 {
+	private Scanner sc = new Scanner(System.in);
+	private int playerId;
+	private int opponentId;
+	private String playerName;
+	private String opponentName;
 	private Socket socket;
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
-	private Scanner sc;
-	private String SERVER_IP = "127.0.0.1";
-	private int SERVER_PORT = 5000;
-	private int playerId;
-	private String name;
-	
-	public static void main(String[] args)
-	{
-		Client client = new Client();
-		client.handshake();
-		client.localCommLoop();
-	}
+	private boolean active;
 	
 	public Client()
 	{
 		try
 		{
-			this.name = "Anonymous";
-			this.socket = new Socket(this.SERVER_IP, this.SERVER_PORT);
-			this.sc = new Scanner(System.in);
-			this.out = new ObjectOutputStream(this.socket.getOutputStream());
-			this.in = new ObjectInputStream(this.socket.getInputStream());
+			this.socket = new Socket("localhost", 5000);
+			this.out = new ObjectOutputStream(socket.getOutputStream());
+			this.in = new ObjectInputStream(socket.getInputStream());
+			this.active = true;
 		}
 		catch(IOException e)
 		{
-			System.out.println("Client.java -> IOException in Client Constructor");
+			System.out.println("IOException in GameClient Constructor");
 		}
 	}
 	
-	public void handshake()
+	public boolean isActive()
 	{
-		Packet assignId = new Packet();
-		
+		return this.active;
+	}
+	
+	public void writeCommand()
+	{
+		System.out.printf("[Player %d](%s)> ", this.playerId, this.playerName);
+		String command = sc.nextLine();
+		Packet commandPacket = new Packet(command);
 		try
 		{
-			assignId = (Packet)in.readObject();
-		}
-		catch (ClassNotFoundException e)
-		{
-			System.out.println("Client.java -> ClassNotFoundException in handshake method -> assignId");
+			this.out.writeObject(commandPacket);
 		}
 		catch (IOException e)
 		{
-			System.out.println("Client.java -> IOException in handshake method -> assignId");
-		}
-		
-		this.playerId = assignId.getPlayerId();
-		System.out.println(assignId.getMessage());
-		this.name = sc.nextLine();
-		Packet assignName = new Packet(this.name);
-		
-		try
-		{
-			out.writeObject(assignName);
-		}
-		catch(IOException e)
-		{
-			System.out.println("Client.java -> IOException in handshake method -> assignName");
+			System.out.println("IOException in writeCommand method");
 		}
 	}
 	
-	public void localCommLoop()
+	public void readResponse()
 	{
-		while(true)
+		Packet responsePacket = null;
+		
+		try
 		{
-			System.out.printf("[%s] %s > ", "Player " + this.playerId, this.name);
-			String command = sc.nextLine();
-			if (command.equals("q")) break;
-			Packet req = new Packet(command);
-			try
-			{
-				this.out.writeObject(req);
-			}
-			catch (IOException e)
-			{
-				System.out.println("Client.java -> IOException in localCommLoop method -> req");
-			}
-			
-			Packet res = null;
-			
-			try
-			{
-				res = (Packet)this.in.readObject();
-			}
-			catch (ClassNotFoundException e)
-			{
-				System.out.println("Client.java -> ClassNotFoundException in localCommLoop method -> res");
-			}
-			catch (IOException e)
-			{
-				System.out.println("Client.java -> IOException in localCommLoop method -> res");
-			}
-			
-			System.out.println("[Server] " + res.getMessage());
-			if(res.getBoard() != null)
-			{
-				res.getBoard().show();
-			}
+			responsePacket = (Packet)this.in.readObject();
 		}
+		catch (ClassNotFoundException e)
+		{
+			System.out.println("ClassNotFoundException in readResponse method");
+		}
+		catch (IOException e)
+		{
+			System.out.println("IOException in readResponse method");
+		}
+		
+		// If the packet contains news of thread death (dead=true), kill the client.
+		if (responsePacket.getThreadDeath())
+		{
+			this.active = false;
+		}
+		
+		// If the packet contains a message, print it.
+		if (responsePacket.getMessage() != null)
+		{
+			System.out.println("[Server] " + responsePacket.getMessage());
+		}
+		
+		// If the packet contains a player ID and not a Board object, assign the player ID.
+		if ((responsePacket.getPlayerId() != 0) && responsePacket.getBoard() == null)
+		{
+			this.playerId = responsePacket.getPlayerId();
+		}
+		
+		// If the packet contains a board state store it locally and display it.
+		if (responsePacket.getBoard() != null)
+		{
+			responsePacket.getBoard().show();
+		}
+	}
+	
+	public void identify()
+	{
+		try
+		{
+			Packet namePacket = new Packet();
+			this.playerId = ((Packet)this.in.readObject()).getPlayerId();
+			System.out.println("Connected to server (" + this.socket.getInetAddress().getHostAddress() + ":" + this.socket.getPort() + ") as player " + this.playerId + ".");
+			System.out.println("What is your name?:");
+			this.playerName = sc.nextLine();
+			namePacket.setPlayerName(this.playerName);
+			this.out.writeObject(namePacket);
+		}
+		catch (ClassNotFoundException e)
+		{
+			System.out.println("ClassNotFoundException in identify method");
+		}
+		catch (IOException e)
+		{
+			System.out.println("IOException in identify method");
+		}
+	}
+	
+	public void close()
+	{
+		try
+		{
+			this.in.close();
+			this.out.close();
+			this.socket.close();
+			this.sc.close();
+			System.out.println("Disconnected.");
+		}
+		catch (IOException e)
+		{
+			System.out.println("IOException in close method");
+		}
+	}
+	
+	public static void main(String[] args)
+	{
+		Client gc = new Client();
+		gc.identify();
+		
+		while(gc.isActive())
+		{
+			gc.writeCommand();
+			gc.readResponse();
+		}
+		
+		gc.close();
 	}
 }

@@ -4,44 +4,28 @@ import java.io.Serializable;
 
 public class Packet implements Serializable
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 4016460685723998566L;
+	private boolean isDead;
 	private int playerId;
+	private String playerName;
 	private String message;
 	private Board board;
-	private int reqcol;
 	
 	public Packet() {}
 	
+	public Packet(int playerId)
+	{
+		this.setPlayerId(playerId);
+	}
+	
 	public Packet(String message)
 	{
-		this.message = message;
-	}
-	
-	public Packet(int playerId, String message)
-	{
-		this.playerId = playerId;
-		this.message = message;
-	}
-	
-	public Packet(String message, Board board)
-	{
-		this.message = message;
-		this.board = board;
-	}
-	
-	public Packet(int reqcol)
-	{
-		this.reqcol = reqcol;
+		this.setMessage(message);
 	}
 
-	public void setMessage(String message)
+	public int getPlayerId()
 	{
-		this.message = message;
-	}
-	
-	public String getMessage()
-	{
-		return this.message;
+		return this.playerId;
 	}
 	
 	public void setPlayerId(int playerId)
@@ -49,9 +33,19 @@ public class Packet implements Serializable
 		this.playerId = playerId;
 	}
 	
-	public int getPlayerId()
+	public String getMessage()
 	{
-		return this.playerId;
+		return this.message;
+	}
+	
+	public void setMessage(String message)
+	{
+		this.message = message;
+	}
+	
+	public Board getBoard()
+	{
+		return this.board;
 	}
 	
 	public void setBoard(Board board)
@@ -59,8 +53,23 @@ public class Packet implements Serializable
 		this.board = board;
 	}
 	
-	public Board getBoard()
+	public String getPlayerName()
 	{
-		return this.board;
+		return this.playerName;
+	}
+	
+	public void setPlayerName(String name)
+	{
+		this.playerName = name;
+	}
+	
+	public boolean getThreadDeath()
+	{
+		return this.isDead;
+	}
+	
+	public void setThreadDeath(boolean isDead)
+	{
+		this.isDead = isDead;
 	}
 }

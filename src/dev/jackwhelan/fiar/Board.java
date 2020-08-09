@@ -4,18 +4,16 @@ import java.io.Serializable;
 
 public class Board implements Serializable
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4923201661841085209L;
 	private char[][] slots;
     private int rows;
     private int cols;
-    private int current_player;
 
     public Board()
     {
         rows = 6;
         cols = 9;
         slots = new char[rows][cols];
-        this.setCurrentPlayer(1);
         for (int i = 0; i < rows; i++)
         {
             for (int j = 0; j < cols; j++)
@@ -50,15 +48,5 @@ public class Board implements Serializable
             }
         }
         return false;
-    }
-    
-    public int getCurrentPlayer()
-    {
-    	return this.current_player;
-    }
-    
-    public void setCurrentPlayer(int playerId)
-    {
-    	this.current_player = playerId;
     }
 }
