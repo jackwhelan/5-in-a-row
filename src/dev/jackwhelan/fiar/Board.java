@@ -11,14 +11,14 @@ public class Board implements Serializable
 
     public Board()
     {
-        rows = 6;
-        cols = 9;
-        slots = new char[rows][cols];
+        this.rows = 6;
+        this.cols = 9;
+        this.slots = new char[rows][cols];
         for (int i = 0; i < rows; i++)
         {
             for (int j = 0; j < cols; j++)
             {
-                slots[i][j] = ' ';
+            	this.slots[i][j] = ' ';
             }
         }
     }
@@ -37,14 +37,66 @@ public class Board implements Serializable
         System.out.printf("\n");
     }
 
-    public Boolean insert(char disc, int col)
+    public boolean insert(char disc, int col)
     {
         for (int i = rows-1; i >= 0; i--)
         {
-            if(slots[i][col-1] == ' ')
+            if(this.slots[i][col-1] == ' ')
             {
-                slots[i][col-1] = disc;
+                this.slots[i][col-1] = disc;
                 return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean check(char player)
+    {
+    	// Horizontal
+        for (int i = 0; i < this.rows; i++)
+        {
+            for (int j = 0; j < this.cols-4; j++)
+            {
+                if (this.slots[i][j] == player && this.slots[i][j+1] == player && this.slots[i][j+2] == player && this.slots[i][j+3] == player && this.slots[i][j+4] == player)
+                {
+                    return true;
+                }           
+            }
+        }
+        
+        // Vertical
+        for (int i = 0; i < this.rows-4; i++)
+        {
+            for (int j = 0; j < this.cols; j++)
+            {
+                if (this.slots[i][j] == player && this.slots[i+1][j] == player && this.slots[i+2][j] == player && this.slots[i+3][j] == player && this.slots[i+4][j] == player)
+                {
+                    return true;
+                }
+            }
+        }
+        
+        // Diagonal Up
+		for (int i = 4; i < this.rows; i++)
+		{
+			for (int j = 0; j < this.cols-4; j++)
+			{
+				if (this.slots[i][j] == player && this.slots[i-1][j+1] == player && this.slots[i-2][j+2] == player && this.slots[i-3][j+3] == player && this.slots[i-4][j+4] == player)
+				{
+					return true;
+				}
+			}
+		}
+        
+        // Diagonal Down
+        for (int i = 0; i < this.rows-4; i++)
+        {
+            for (int j = 0; j < this.cols-4; j++)
+            {
+                if (this.slots[i][j] == player && this.slots[i+1][j+1] == player && this.slots[i+2][j+2] == player && this.slots[i+3][j+3] == player && this.slots[i+4][j+4] == player)
+                {
+                	return true;
+                }
             }
         }
         return false;

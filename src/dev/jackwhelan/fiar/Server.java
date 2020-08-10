@@ -102,7 +102,7 @@ public class Server
 			try
 			{
 				this.out.writeObject(threadDeathNotice);
-				this.out.reset();
+				this.out.flush();
 				this.out.close();
 				this.in.close();
 				this.socket.close();
@@ -155,9 +155,26 @@ public class Server
 							{
 								if (reqcol > 0 && reqcol < 10)
 								{
+									this.insertBoth((char)(this.playerId+'0'), reqcol);
+									if(this.limboBoard.check((char)(this.playerId+'0')))
+									{
+										Packet winner = new Packet("You win!", this.limboBoard);
+										winner.setThreadDeath(true);
+										Packet loser = new Packet("You lose!", this.limboBoard);
+										loser.setThreadDeath(true);
+										if(this.currentPlayer == 1)
+										{
+											p1.out.writeObject(winner);
+											p2.out.writeObject(loser);
+										}
+										else
+										{
+											p1.out.writeObject(loser);
+											p2.out.writeObject(winner);
+										}
+									}
 									p1.swapCurrentPlayer();
 									p2.swapCurrentPlayer();
-									this.insertBoth((char)(this.playerId+'0'), reqcol);
 									this.out.writeObject(new Packet("You inserted to column " + reqcol + ".", this.limboBoard, false));
 									this.out.reset();
 									if(this.playerId == 1)
@@ -213,8 +230,10 @@ public class Server
 								break;
 							case "q":
 								System.out.println("[Player " + playerId + "] " + this.playerName + " has disconnected. The game will now end.");
-								p1.stop();
-								p2.stop();
+								Packet disconnectNotice = new Packet("The game has ended prematurely due to player " + this.currentPlayer + " (" + this.playerName + ") disconnecting.");
+								disconnectNotice.setThreadDeath(true);
+								p1.out.writeObject(disconnectNotice);
+								p2.out.writeObject(disconnectNotice);
 								break;
 							default:
 								res.setMessage(req.getMessage() + " is not a valid command");
@@ -241,6 +260,12 @@ public class Server
 				System.out.println("ClassNotFoundException in run method");
 			}
 		}
+	}
+	
+	public void kill()
+	{
+		p1.stop();
+		p2.stop();
 	}
 	
 	public static void main(String[] args)
